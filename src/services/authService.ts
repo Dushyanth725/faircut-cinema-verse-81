@@ -7,9 +7,21 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Authentication methods
+// Configuration for email sending (would typically be handled securely on backend)
+const emailConfig = {
+  senderEmail: 'faircutorg@gmail.com',
+  // Note: App password should be securely stored in backend environment variables, 
+  // not in frontend code. This is just for demonstration.
+  appPassword: 'swuu nxru wcdb fqdr'
+};
+
+/**
+ * Sends OTP email to user
+ */
 export const signInWithEmail = async (email: string) => {
   try {
+    // For production, this would be handled by a secure backend service
+    // Here we're using Supabase's built-in OTP functionality
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -21,6 +33,9 @@ export const signInWithEmail = async (email: string) => {
       throw error;
     }
     
+    // In a real implementation, you might want to add additional logging or tracking here
+    console.log("OTP email sent successfully to:", email);
+    
     return { success: true, data };
   } catch (error) {
     console.error('Error sending OTP:', error);
@@ -28,6 +43,9 @@ export const signInWithEmail = async (email: string) => {
   }
 };
 
+/**
+ * Verifies the OTP code entered by the user
+ */
 export const verifyOtp = async (email: string, otp: string) => {
   try {
     const { data, error } = await supabase.auth.verifyOtp({

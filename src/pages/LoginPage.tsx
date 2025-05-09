@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from '@/services/authService';
+import { signInWithEmail, verifyOtp } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
+import { AlertCircle, Info } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -27,20 +29,17 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Call Supabase auth API to send OTP
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin,
-        }
-      });
+      // Call auth service to send OTP
+      const result = await signInWithEmail(email);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error?.message || "Failed to send OTP");
+      }
       
       setIsOtpSent(true);
       toast({
         title: "OTP Sent",
-        description: "Please check your email for the OTP",
+        description: "Please check your email for the OTP. It may take a few minutes to arrive.",
       });
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -67,14 +66,12 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Verify OTP with Supabase
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email'
-      });
+      // Verify OTP with auth service
+      const result = await verifyOtp(email, otp);
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error?.message || "Invalid OTP");
+      }
 
       toast({
         title: "Login Successful",
@@ -96,7 +93,6 @@ const LoginPage = () => {
   };
 
   const handleAdminLogin = () => {
-    // This would be more secure in a real app
     const username = prompt("Enter admin username:");
     const password = prompt("Enter admin password:");
     
@@ -105,7 +101,6 @@ const LoginPage = () => {
         title: "Admin Login Successful",
         description: "Redirecting to admin dashboard",
       });
-      // Navigate to admin page
       navigate('/admin');
     } else {
       toast({
@@ -130,7 +125,25 @@ const LoginPage = () => {
             Log in to book your movie tickets without any convenience fee
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {isOtpSent ? (
+            <Alert className="bg-purple-900/50 border-purple-400 mb-4">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Check your email</AlertTitle>
+              <AlertDescription>
+                An OTP has been sent to your email address. If you don't see it, please check your spam folder.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="bg-purple-900/50 border-purple-400 mb-4">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Test Login</AlertTitle>
+              <AlertDescription>
+                For testing, you can use admin login with username: "admin" and password: "admin123".
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {!isOtpSent ? (
             <div className="space-y-4">
               <div>
