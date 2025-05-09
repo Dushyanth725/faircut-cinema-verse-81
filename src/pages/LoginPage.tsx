@@ -3,14 +3,16 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from '@/services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSendOtp = async () => {
     if (!email) {
@@ -24,16 +26,32 @@ const LoginPage = () => {
     
     setIsLoading(true);
     
-    // In a real implementation, this would call the Supabase auth service
-    // For now, we'll just simulate sending an OTP
-    setTimeout(() => {
+    try {
+      // Call Supabase auth API to send OTP
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
+      });
+
+      if (error) throw error;
+      
       setIsOtpSent(true);
-      setIsLoading(false);
       toast({
         title: "OTP Sent",
         description: "Please check your email for the OTP",
       });
-    }, 1500);
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast({
+        title: "Failed to send OTP",
+        description: error.message || "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyOtp = async () => {
@@ -48,17 +66,33 @@ const LoginPage = () => {
     
     setIsLoading(true);
     
-    // In a real implementation, this would verify the OTP with Supabase
-    // For now, we'll just simulate verification
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Verify OTP with Supabase
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email'
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Login Successful",
         description: "You have successfully logged in",
       });
-      // We would navigate to the location page here
-      window.location.href = '/location';
-    }, 1500);
+      
+      // Navigate to location page after successful login
+      navigate('/location');
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid OTP. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAdminLogin = () => {
@@ -72,7 +106,7 @@ const LoginPage = () => {
         description: "Redirecting to admin dashboard",
       });
       // Navigate to admin page
-      window.location.href = '/admin';
+      navigate('/admin');
     } else {
       toast({
         title: "Login Failed",

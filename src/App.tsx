@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import LocationPage from "./pages/LocationPage";
+import TheatrePage from "./pages/TheatrePage";
+import TheatreDetails from "./pages/TheatreDetails";
+import MovieDetails from "./pages/MovieDetails";
+import SeatSelection from "./pages/SeatSelection";
+import Payment from "./pages/Payment";
+import Ticket from "./pages/Ticket";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +25,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/location" element={<LocationPage />} />
+          <Route path="/theatres" element={<TheatrePage />} />
+          <Route path="/theatre/:id" element={<TheatreDetails />} />
+          <Route path="/movie/:theatreId/:movieId" element={<MovieDetails />} />
+          <Route path="/seats/:showId" element={<SeatSelection />} />
+          <Route path="/payment/:showId" element={<Payment />} />
+          <Route path="/ticket/:bookingId" element={<Ticket />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
