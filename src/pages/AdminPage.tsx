@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,10 +29,19 @@ const AdminPage = () => {
     time: ''
   });
   
-  // Initialize with empty array, no default movies
-  const [movies, setMovies] = useState([]);
+  // Load movies from localStorage when component mounts
+  const [movies, setMovies] = useState(() => {
+    const storedMovies = localStorage.getItem('faircut-movies');
+    return storedMovies ? JSON.parse(storedMovies) : [];
+  });
   
   const [showtimes, setShowtimes] = useState([]);
+  
+  // Save movies to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('faircut-movies', JSON.stringify(movies));
+    console.log('Movies saved to localStorage:', movies);
+  }, [movies]);
   
   // Time options for the dropdown
   const timeOptions = [
@@ -60,7 +69,8 @@ const AdminPage = () => {
       description: newMovie.description
     };
     
-    setMovies([...movies, movieToAdd]);
+    const updatedMovies = [...movies, movieToAdd];
+    setMovies(updatedMovies);
     setNewMovie({ title: '', description: '', posterUrl: '' });
     
     toast({

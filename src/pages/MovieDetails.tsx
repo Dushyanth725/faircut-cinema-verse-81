@@ -26,10 +26,16 @@ const MovieDetails = () => {
       try {
         // Get movie from local storage
         const storedMovies = localStorage.getItem('faircut-movies');
+        console.log("Fetched movies for details:", storedMovies);
+        
         if (storedMovies) {
           const movies = JSON.parse(storedMovies);
+          console.log("Looking for movie with ID:", movieId, "in", movies);
           const foundMovie = movies.find(m => m.id === movieId);
+          console.log("Found movie:", foundMovie);
           setMovie(foundMovie);
+        } else {
+          console.log("No movies found in localStorage");
         }
       } catch (error) {
         console.error('Error fetching movie:', error);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,10 +51,14 @@ const TheatreDetails = () => {
         const selectedTheatre = theatres.find(t => t.id === id);
         setTheatre(selectedTheatre);
         
-        // Get movies from local storage (where we store admin-added movies)
+        // Get movies from local storage
         const storedMovies = localStorage.getItem('faircut-movies');
+        console.log("Fetched movies from localStorage:", storedMovies);
+        
         if (storedMovies) {
-          setMovies(JSON.parse(storedMovies));
+          const parsedMovies = JSON.parse(storedMovies);
+          console.log("Parsed movies:", parsedMovies);
+          setMovies(parsedMovies);
         } else {
           // Initialize with empty array - no default movies
           setMovies([]);
@@ -69,12 +72,12 @@ const TheatreDetails = () => {
 
     fetchMovies();
     
-    // Set up listener for movie additions
+    // Add event listener to listen for localStorage changes
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [id]);
   
-  // Listen for changes to localStorage (for testing purposes)
+  // Listen for changes to localStorage
   const handleStorageChange = (e) => {
     if (e.key === 'faircut-movies') {
       const storedMovies = localStorage.getItem('faircut-movies');
@@ -83,16 +86,6 @@ const TheatreDetails = () => {
       }
     }
   };
-
-  // Store movies in localStorage when they change in AdminPage
-  useEffect(() => {
-    if (window.location.pathname.includes('admin')) {
-      return; // Don't save from admin page
-    }
-    if (movies && movies.length > 0) {
-      localStorage.setItem('faircut-movies', JSON.stringify(movies));
-    }
-  }, [movies]);
 
   if (loading) {
     return (

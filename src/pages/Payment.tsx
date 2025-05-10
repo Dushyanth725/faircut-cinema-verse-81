@@ -34,15 +34,15 @@ const Payment = () => {
         seatPrices: [150, 150],
         totalAmount: 300
       });
-
-      // Load Razorpay script
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      document.body.appendChild(script);
     };
     
     fetchBookingInfo();
+    
+    // Load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
   }, [showId]);
 
   const handlePayment = async () => {
@@ -57,9 +57,9 @@ const Payment = () => {
       // In a production app, you would get an order ID from your backend
       const orderId = 'order_' + Math.floor(Math.random() * 1000000).toString();
       
-      // Create a new Razorpay instance
+      // Create a new Razorpay instance with the updated key
       const options = {
-        key: 'rzp_test_1v4w1diaSwnTNf', // Replace with your actual Razorpay key
+        key: 'rzp_test_VffKeX3x6wAUu6', // Updated Razorpay test key
         amount: bookingInfo.totalAmount * 100, // Razorpay expects amount in paise
         currency: 'INR',
         name: 'Fair-Cut Cinemas',
@@ -89,6 +89,7 @@ const Payment = () => {
         }
       };
       
+      console.log("Initializing Razorpay with options:", options);
       const razorpay = new window.Razorpay(options);
       razorpay.open();
       
