@@ -1,14 +1,9 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { signInWithEmail, verifyOtp } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Info, Mail } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import LoginCard from '@/components/login/LoginCard';
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -119,104 +114,18 @@ const LoginPage = () => {
         <p className="text-purple-200">Convenience cost-free movie tickets</p>
       </div>
       
-      <Card className="w-full max-w-md bg-black/70 border-purple-500 text-white">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-purple-300">Welcome to Fair-Cut</CardTitle>
-          <CardDescription className="text-center text-purple-200">
-            Log in to book your movie tickets without any convenience fee
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isOtpSent ? (
-            <Alert className="bg-purple-900/50 border-purple-400 mb-4">
-              <Info className="h-4 w-4" />
-              <AlertTitle>Check your email</AlertTitle>
-              <AlertDescription>
-                A 6-digit OTP has been sent to your email address. If you don't see it, please check your spam folder.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert className="bg-purple-900/50 border-purple-400 mb-4">
-              <Info className="h-4 w-4" />
-              <AlertTitle>Test Login</AlertTitle>
-              <AlertDescription>
-                For testing, you can use admin login with username: "admin" and password: "admin123".
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {!isOtpSent ? (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-purple-300 mb-1">
-                  Email
-                </label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-gray-900 border-purple-500 text-white pl-9"
-                  />
-                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-purple-400" />
-                </div>
-              </div>
-              <Button 
-                onClick={handleSendOtp} 
-                disabled={isLoading} 
-                className="w-full bg-purple-600 hover:bg-purple-700"
-              >
-                {isLoading ? "Sending OTP..." : "Send OTP"}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="otp" className="block text-sm font-medium text-purple-300 mb-1">
-                  Enter 6-digit OTP
-                </label>
-                <div className="flex justify-center my-4">
-                  <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} className="bg-gray-900 border-purple-500" />
-                      <InputOTPSlot index={1} className="bg-gray-900 border-purple-500" />
-                      <InputOTPSlot index={2} className="bg-gray-900 border-purple-500" />
-                      <InputOTPSlot index={3} className="bg-gray-900 border-purple-500" />
-                      <InputOTPSlot index={4} className="bg-gray-900 border-purple-500" />
-                      <InputOTPSlot index={5} className="bg-gray-900 border-purple-500" />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-              </div>
-              <Button 
-                onClick={handleVerifyOtp} 
-                disabled={isLoading} 
-                className="w-full bg-purple-600 hover:bg-purple-700"
-              >
-                {isLoading ? "Verifying..." : "Verify & Login"}
-              </Button>
-              <div className="text-center">
-                <button 
-                  onClick={() => setIsOtpSent(false)} 
-                  className="text-sm text-purple-400 hover:underline"
-                >
-                  Change email
-                </button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <button 
-            onClick={handleAdminLogin}
-            className="text-sm text-purple-400 hover:underline"
-          >
-            Admin Login
-          </button>
-        </CardFooter>
-      </Card>
+      <LoginCard 
+        email={email}
+        setEmail={setEmail}
+        otp={otp}
+        setOtp={setOtp}
+        isOtpSent={isOtpSent}
+        setIsOtpSent={setIsOtpSent}
+        isLoading={isLoading}
+        handleSendOtp={handleSendOtp}
+        handleVerifyOtp={handleVerifyOtp}
+        handleAdminLogin={handleAdminLogin}
+      />
     </div>
   );
 };
