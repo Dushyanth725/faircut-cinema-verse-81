@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { supabase } from '@/services/authService';
 
 const TheatreDetails = () => {
   const { id } = useParams();
@@ -49,22 +48,16 @@ const TheatreDetails = () => {
     const fetchMovies = async () => {
       setLoading(true);
       try {
-        // Ideally we would fetch from Supabase
-        // const { data, error } = await supabase.from('movies').select('*');
-        // if (error) throw error;
-        // setMovies(data);
-        
         // Find the current theatre
         const selectedTheatre = theatres.find(t => t.id === id);
         setTheatre(selectedTheatre);
         
         // Get movies from local storage (where we store admin-added movies)
-        // In a real app, this would be from Supabase
         const storedMovies = localStorage.getItem('faircut-movies');
         if (storedMovies) {
           setMovies(JSON.parse(storedMovies));
         } else {
-          // Initialize with empty array
+          // Initialize with empty array - no default movies
           setMovies([]);
         }
       } catch (error) {

@@ -16,14 +16,14 @@ const SeatSelection = () => {
   // Generate seat layout
   const generateSeats = () => {
     const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    const seatsPerRow = 10;
+    const seatsPerRow = 14; // Increased from 10 to make wider
     const seats = [];
     
     // Generate all seats
     rows.forEach((row, rowIndex) => {
       for (let i = 1; i <= seatsPerRow; i++) {
         const seatId = `${row}${i}`;
-        // First two rows are premium seats (cheaper)
+        // First two rows are premium seats (₹70)
         const isPremium = rowIndex < 2;
         seats.push({
           id: seatId,
@@ -118,7 +118,7 @@ const SeatSelection = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-900 via-violet-800 to-purple-900 p-4">
-      <div className="container mx-auto max-w-md">
+      <div className="container mx-auto max-w-4xl"> {/* Increased from max-w-md to max-w-4xl */}
         <Button 
           variant="ghost" 
           className="text-purple-300 mb-4" 
@@ -156,27 +156,32 @@ const SeatSelection = () => {
         </div>
         
         <Card className="bg-black/70 border-purple-500 mb-4">
-          <div className="p-4 text-center border-b border-purple-500/30">
-            <div className="w-4/5 h-2 bg-purple-600 mx-auto mb-1"></div>
-            <p className="text-purple-300 text-sm">SCREEN</p>
+          <div className="p-6 text-center border-b border-purple-500/30"> {/* Increased padding */}
+            <div className="w-4/5 h-4 bg-purple-600 mx-auto mb-2 rounded-md"></div> {/* Bigger screen */}
+            <p className="text-purple-300">SCREEN</p>
           </div>
-          <CardContent className="p-4 overflow-x-auto">
-            <div className="min-w-[500px]">
-              {Object.keys(seatsByRow).map(row => (
-                <div key={row} className="flex mb-2">
-                  <div className="mr-2 w-6 flex items-center justify-center text-purple-300">
+          <CardContent className="p-8 overflow-x-auto"> {/* Increased padding */}
+            <div className="mx-auto w-full">
+              <div className="flex justify-center mb-8">
+                <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center border-4 border-purple-500">
+                  <span className="text-white text-xs">PROJECTOR</span>
+                </div>
+              </div>
+              {Object.keys(seatsByRow).map((row) => (
+                <div key={row} className="flex mb-3"> {/* Increased spacing */}
+                  <div className="mr-3 w-6 flex items-center justify-center text-purple-300 font-bold">
                     {row}
                   </div>
-                  <div className="flex flex-1 justify-center gap-1">
+                  <div className="flex flex-1 justify-center gap-3"> {/* Increased gap */}
                     {seatsByRow[row].map(seat => (
                       <button
                         key={seat.id}
                         className={`
-                          w-7 h-7 text-xs rounded-sm flex items-center justify-center
+                          w-10 h-10 text-xs font-bold rounded-md flex items-center justify-center transition-all
                           ${!seat.isAvailable ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 
-                            selectedSeats.includes(seat.id) ? 'bg-green-500 text-white' : 
-                            seat.price === 70 ? 'bg-purple-800 text-white hover:bg-purple-700' : 
-                            'bg-purple-600 text-white hover:bg-purple-500'}
+                            selectedSeats.includes(seat.id) ? 'bg-green-500 text-white scale-110 shadow-lg' : 
+                            seat.price === 70 ? 'bg-emerald-700 text-white hover:bg-emerald-600 hover:scale-105' : 
+                            'bg-blue-600 text-white hover:bg-blue-500 hover:scale-105'}
                         `}
                         onClick={() => handleSelectSeat(seat.id)}
                         disabled={!seat.isAvailable}
@@ -189,39 +194,37 @@ const SeatSelection = () => {
               ))}
             </div>
           </CardContent>
-          <div className="p-4 border-t border-purple-500/30">
-            <div className="flex justify-between mb-2">
+          <div className="p-6 border-t border-purple-500/30"> {/* Increased padding */}
+            <div className="grid grid-cols-2 gap-4 mb-4"> {/* Made into 2 columns for better layout */}
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-purple-600 mr-2"></div>
-                <span className="text-purple-300 text-sm">Regular (₹150)</span>
+                <div className="w-6 h-6 bg-blue-600 mr-2 rounded-md"></div>
+                <span className="text-purple-300">Regular (₹150)</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-purple-800 mr-2"></div>
-                <span className="text-purple-300 text-sm">Premium (₹70)</span>
-              </div>
-            </div>
-            <div className="flex justify-between">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-green-500 mr-2"></div>
-                <span className="text-purple-300 text-sm">Selected</span>
+                <div className="w-6 h-6 bg-emerald-700 mr-2 rounded-md"></div>
+                <span className="text-purple-300">Premium (₹70)</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-gray-700 mr-2"></div>
-                <span className="text-purple-300 text-sm">Unavailable</span>
+                <div className="w-6 h-6 bg-green-500 mr-2 rounded-md"></div>
+                <span className="text-purple-300">Selected</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-gray-700 mr-2 rounded-md"></div>
+                <span className="text-purple-300">Unavailable</span>
               </div>
             </div>
           </div>
-          <CardFooter className="flex flex-col p-4 border-t border-purple-500/30">
+          <CardFooter className="flex flex-col p-6 border-t border-purple-500/30"> {/* Increased padding */}
             <div className="w-full flex justify-between items-center mb-3">
               <div className="text-purple-300">
-                Selected seats: <span className="text-white">{selectedSeats.join(', ') || 'None'}</span>
+                Selected seats: <span className="text-white font-bold">{selectedSeats.join(', ') || 'None'}</span>
               </div>
-              <div className="text-white font-bold">
+              <div className="text-white text-xl font-bold">
                 Total: ₹{calculateTotal()}
               </div>
             </div>
             <Button 
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg" /* Bigger button */
               disabled={selectedSeats.length !== seatCount || loading}
               onClick={handleContinue}
             >

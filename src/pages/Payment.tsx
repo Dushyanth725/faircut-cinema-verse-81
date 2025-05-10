@@ -3,15 +3,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CreditCard, QrCode } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Define the window interface for Razorpay
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const Payment = () => {
   const { showId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [paymentTab, setPaymentTab] = useState('card');
   const [bookingInfo, setBookingInfo] = useState(null);
 
   // In a real app, this would come from previous pages via state management or from an API
@@ -29,6 +34,12 @@ const Payment = () => {
         seatPrices: [150, 150],
         totalAmount: 300
       });
+
+      // Load Razorpay script
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
     };
     
     fetchBookingInfo();
@@ -38,29 +49,49 @@ const Payment = () => {
     setLoading(true);
     
     try {
-      // In a real app, we would initialize Razorpay here
-      // This is just a simulation for now
+      // Check if Razorpay is loaded
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK failed to load');
+      }
+
+      // In a production app, you would get an order ID from your backend
+      const orderId = 'order_' + Math.floor(Math.random() * 1000000).toString();
       
-      // Simulating payment process
-      toast({
-        title: "Processing payment",
-        description: "Please wait..."
-      });
+      // Create a new Razorpay instance
+      const options = {
+        key: 'rzp_test_1v4w1diaSwnTNf', // Replace with your actual Razorpay key
+        amount: bookingInfo.totalAmount * 100, // Razorpay expects amount in paise
+        currency: 'INR',
+        name: 'Fair-Cut Cinemas',
+        description: `Booking for ${bookingInfo.movieTitle}`,
+        image: 'https://i.imgur.com/xELPaag.png', // Your logo
+        order_id: orderId,
+        handler: function(response) {
+          // This function runs when payment is successful
+          const paymentId = response.razorpay_payment_id;
+          const bookingId = 'BK' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+          
+          toast({
+            title: "Payment successful",
+            description: `Payment ID: ${paymentId}`
+          });
+          
+          // Navigate to tickets page
+          navigate(`/ticket/${bookingId}`);
+        },
+        prefill: {
+          name: 'Customer Name',
+          email: 'customer@example.com',
+          contact: '9999999999'
+        },
+        theme: {
+          color: '#9333ea' // Purple color to match our theme
+        }
+      };
       
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
       
-      // Simulate successful payment
-      // Generate a random booking ID
-      const bookingId = 'BK' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-      
-      toast({
-        title: "Payment successful",
-        description: "Your tickets have been booked!"
-      });
-      
-      // Navigate to tickets page
-      navigate(`/ticket/${bookingId}`);
     } catch (error) {
       console.error('Payment error:', error);
       toast({
@@ -130,58 +161,13 @@ const Payment = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
-        
-        <Card className="bg-black/70 border-purple-500">
-          <CardContent className="p-4">
-            <h3 className="text-lg font-medium text-white mb-3">Payment Method</h3>
-            
-            <Tabs value={paymentTab} onValueChange={setPaymentTab}>
-              <TabsList className="grid grid-cols-2 bg-gray-900">
-                <TabsTrigger value="card" className="data-[state=active]:bg-purple-600">
-                  <CreditCard size={16} className="mr-2" /> Card
-                </TabsTrigger>
-                <TabsTrigger value="upi" className="data-[state=active]:bg-purple-600">
-                  <QrCode size={16} className="mr-2" /> UPI
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="card" className="mt-4">
-                <div className="space-y-4">
-                  {/* In a real app, we'd integrate Razorpay Elements or a similar solution here */}
-                  <div className="p-4 border border-purple-500/30 rounded-md text-center">
-                    <p className="text-white">Razorpay Test Payment Gateway</p>
-                    <p className="text-xs text-purple-300 mt-1">KEY ID: rzp_test_1v4w1diaSwnTNf</p>
-                  </div>
-                  <p className="text-purple-300 text-sm">
-                    This is a test payment gateway. No actual charges will be made.
-                  </p>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="upi" className="mt-4">
-                <div className="space-y-4 flex flex-col items-center">
-                  <div className="p-4 bg-white rounded-md">
-                    {/* This would be a real QR code in production */}
-                    <div className="w-32 h-32 bg-gray-900 flex items-center justify-center">
-                      <QrCode size={64} className="text-white" />
-                    </div>
-                  </div>
-                  <p className="text-purple-300 text-sm text-center">
-                    Scan this QR code using any UPI app to pay
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          
           <CardFooter className="p-4 border-t border-purple-500/30">
             <Button 
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
               disabled={loading}
               onClick={handlePayment}
             >
-              {loading ? 'Processing...' : `Pay ₹${bookingInfo.totalAmount}`}
+              {loading ? 'Processing...' : `Pay ₹${bookingInfo.totalAmount} with Razorpay`}
             </Button>
           </CardFooter>
         </Card>

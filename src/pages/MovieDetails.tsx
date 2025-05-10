@@ -1,35 +1,16 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const MovieDetails = () => {
   const { theatreId, movieId } = useParams();
   const navigate = useNavigate();
-
-  // Sample movies - in a real app, these would come from Supabase
-  const movies = [
-    {
-      id: '1',
-      title: 'Interstellar',
-      poster: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg',
-      description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.'
-    },
-    {
-      id: '2',
-      title: 'Dune',
-      poster: 'https://m.media-amazon.com/images/M/MV5BMDQ0NjgyN2YtNWViNS00YjA3LTkxNDktYzFkZTExZGMxZDkxXkEyXkFqcGdeQXVyODE5NzE3OTE@._V1_.jpg',
-      description: 'Feature adaptation of Frank Herbert\'s science fiction novel about the son of a noble family entrusted with the protection of the most valuable asset in the galaxy.'
-    },
-    {
-      id: '3',
-      title: 'The Batman',
-      poster: 'https://m.media-amazon.com/images/M/MV5BMDdmMTBiNTYtMDIzNi00NGVlLWIzMDYtZTk3MTQ3NGQxZGEwXkEyXkFqcGdeQXVyMzMwOTU5MDk@._V1_.jpg',
-      description: 'When the Riddler, a sadistic serial killer, begins murdering key political figures in Gotham, Batman is forced to investigate the city\'s hidden corruption.'
-    }
-  ];
+  const [movie, setMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Sample showtimes - in a real app, these would come from Supabase
   const showtimes = [
@@ -39,7 +20,39 @@ const MovieDetails = () => {
     { id: '4', screen: 'Screen 2', time: '08:00 PM', date: '2025-05-09' },
   ];
 
-  const movie = movies.find(m => m.id === movieId);
+  useEffect(() => {
+    const fetchMovie = async () => {
+      setLoading(true);
+      try {
+        // Get movie from local storage
+        const storedMovies = localStorage.getItem('faircut-movies');
+        if (storedMovies) {
+          const movies = JSON.parse(storedMovies);
+          const foundMovie = movies.find(m => m.id === movieId);
+          setMovie(foundMovie);
+        }
+      } catch (error) {
+        console.error('Error fetching movie:', error);
+        toast({
+          title: "Error",
+          description: "Could not load movie details",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchMovie();
+  }, [movieId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-r from-purple-900 via-violet-800 to-purple-900 flex items-center justify-center">
+        <div className="text-white">Loading movie details...</div>
+      </div>
+    );
+  }
 
   if (!movie) {
     return (
@@ -76,7 +89,7 @@ const MovieDetails = () => {
         <div className="flex mb-6 bg-black/70 rounded-lg overflow-hidden border border-purple-500">
           <div className="w-1/3">
             <img 
-              src={movie.poster} 
+              src={movie.posterUrl} 
               alt={movie.title} 
               className="h-full object-cover"
             />

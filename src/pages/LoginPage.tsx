@@ -1,22 +1,26 @@
 
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
-import { signInWithEmail, verifyOtp } from '@/services/authService';
+import { Mail, Lock, LogIn } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import LoginCard from '@/components/login/LoginCard';
+import { signInWithEmail, signUpWithEmail } from '@/services/authService';
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
 
-  const handleSendOtp = async () => {
-    if (!email) {
+  const handleAuthentication = async () => {
+    if (!email || !password) {
       toast({
         title: "Error",
-        description: "Please enter your email address",
+        description: "Please enter both email and password",
         variant: "destructive",
       });
       return;
@@ -25,62 +29,29 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Call auth service to send OTP
-      const result = await signInWithEmail(email);
+      // Call auth service to sign in or sign up
+      const result = isSignUp 
+        ? await signUpWithEmail(email, password)
+        : await signInWithEmail(email, password);
 
       if (!result.success) {
-        throw new Error(result.error?.message || "Failed to send OTP");
+        throw new Error(result.error?.message || "Authentication failed");
       }
       
-      setIsOtpSent(true);
       toast({
-        title: "OTP Sent",
-        description: "A 6-digit OTP has been sent to your email. Please check your inbox.",
-      });
-    } catch (error) {
-      console.error("Error sending OTP:", error);
-      toast({
-        title: "Failed to send OTP",
-        description: error.message || "An unknown error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      toast({
-        title: "Error",
-        description: "Please enter the complete 6-digit OTP",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Verify OTP with auth service
-      const result = await verifyOtp(email, otp);
-
-      if (!result.success) {
-        throw new Error(result.error?.message || "Invalid OTP");
-      }
-
-      toast({
-        title: "Login Successful",
-        description: "You have successfully logged in",
+        title: isSignUp ? "Sign Up Successful" : "Login Successful",
+        description: isSignUp 
+          ? "Your account has been created" 
+          : "You have successfully logged in",
       });
       
       // Navigate to location page after successful login
       navigate('/location');
     } catch (error) {
-      console.error("Error verifying OTP:", error);
+      console.error("Authentication error:", error);
       toast({
-        title: "Verification Failed",
-        description: error.message || "Invalid OTP. Please try again.",
+        title: "Authentication Failed",
+        description: error.message || "An unknown error occurred",
         variant: "destructive",
       });
     } finally {
@@ -114,18 +85,75 @@ const LoginPage = () => {
         <p className="text-purple-200">Convenience cost-free movie tickets</p>
       </div>
       
-      <LoginCard 
-        email={email}
-        setEmail={setEmail}
-        otp={otp}
-        setOtp={setOtp}
-        isOtpSent={isOtpSent}
-        setIsOtpSent={setIsOtpSent}
-        isLoading={isLoading}
-        handleSendOtp={handleSendOtp}
-        handleVerifyOtp={handleVerifyOtp}
-        handleAdminLogin={handleAdminLogin}
-      />
+      <Card className="w-full max-w-md bg-black/70 border-purple-500">
+        <CardHeader>
+          <CardTitle className="text-center text-white">
+            {isSignUp ? "Create Account" : "Welcome Back"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-purple-300">Email</Label>
+            <div className="relative">
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="bg-gray-900 border-purple-500 text-white pl-9"
+              />
+              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-purple-400" />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-purple-300">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="bg-gray-900 border-purple-500 text-white pl-9"
+              />
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-purple-400" />
+            </div>
+          </div>
+          
+          <Button 
+            onClick={handleAuthentication} 
+            disabled={isLoading} 
+            className="w-full bg-purple-600 hover:bg-purple-700"
+          >
+            <LogIn className="mr-2 h-4 w-4" />
+            {isLoading ? "Processing..." : (isSignUp ? "Sign Up" : "Login")}
+          </Button>
+          
+          <div className="text-center">
+            <button 
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)} 
+              className="text-purple-400 text-sm hover:text-purple-300"
+            >
+              {isSignUp 
+                ? "Already have an account? Login" 
+                : "Don't have an account? Sign Up"}
+            </button>
+          </div>
+          
+          <div className="pt-4 text-center border-t border-purple-800">
+            <button 
+              type="button"
+              onClick={handleAdminLogin}
+              className="text-purple-400 text-sm hover:text-purple-300"
+            >
+              Admin Login
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
