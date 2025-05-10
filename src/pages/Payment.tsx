@@ -17,6 +17,7 @@ const Payment = () => {
   const { showId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [bookingInfo, setBookingInfo] = useState(null);
 
   // In a real app, this would come from previous pages via state management or from an API
@@ -42,7 +43,29 @@ const Payment = () => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
+    
+    script.onload = () => {
+      console.log('Razorpay script loaded successfully');
+      setScriptLoaded(true);
+    };
+    
+    script.onerror = () => {
+      console.error('Failed to load Razorpay script');
+      toast({
+        title: "Payment Failed",
+        description: "Could not load payment gateway",
+        variant: "destructive"
+      });
+    };
+    
     document.body.appendChild(script);
+    
+    return () => {
+      // Cleanup script when component unmounts
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, [showId]);
 
   const handlePayment = async () => {
@@ -59,7 +82,7 @@ const Payment = () => {
       
       // Create a new Razorpay instance with the updated key
       const options = {
-        key: 'rzp_test_VffKeX3x6wAUu6', // Updated Razorpay test key
+        key: 'rzp_test_VffKeX3x6wAUu6', // Using the provided key
         amount: bookingInfo.totalAmount * 100, // Razorpay expects amount in paise
         currency: 'INR',
         name: 'Fair-Cut Cinemas',
@@ -86,6 +109,16 @@ const Payment = () => {
         },
         theme: {
           color: '#9333ea' // Purple color to match our theme
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You have cancelled the payment",
+              variant: "destructive"
+            });
+          }
         }
       };
       
@@ -165,11 +198,12 @@ const Payment = () => {
           <CardFooter className="p-4 border-t border-purple-500/30">
             <Button 
               className="w-full bg-purple-600 hover:bg-purple-700 py-6 text-lg"
-              disabled={loading}
+              disabled={loading || !scriptLoaded}
               onClick={handlePayment}
             >
               {loading ? 'Processing...' : `Pay ₹${bookingInfo.totalAmount} with Razorpay`}
             </Button>
+            {!scriptLoaded && <p className="text-yellow-300 text-sm mt-2 text-center w-full">Loading payment gateway...</p>}
           </CardFooter>
         </Card>
       </div>
