@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
@@ -84,9 +85,9 @@ export const verifyOtp = async (email: string, otp: string) => {
     otpStore.delete(email);
     
     // Sign in the user with Supabase
+    // Fixed: removed the invalid 'token' property
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
-      token: otp,
       options: {
         shouldCreateUser: true,
       }
