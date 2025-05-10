@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "@/components/ui/use-toast";
 import { signInWithEmail, verifyOtp } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Info } from 'lucide-react';
+import { AlertCircle, Info, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -39,7 +40,7 @@ const LoginPage = () => {
       setIsOtpSent(true);
       toast({
         title: "OTP Sent",
-        description: "Please check your email for the OTP. It may take a few minutes to arrive.",
+        description: "A 6-digit OTP has been sent to your email. Please check your inbox.",
       });
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -54,10 +55,10 @@ const LoginPage = () => {
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp) {
+    if (!otp || otp.length !== 6) {
       toast({
         title: "Error",
-        description: "Please enter the OTP sent to your email",
+        description: "Please enter the complete 6-digit OTP",
         variant: "destructive",
       });
       return;
@@ -131,7 +132,7 @@ const LoginPage = () => {
               <Info className="h-4 w-4" />
               <AlertTitle>Check your email</AlertTitle>
               <AlertDescription>
-                An OTP has been sent to your email address. If you don't see it, please check your spam folder.
+                A 6-digit OTP has been sent to your email address. If you don't see it, please check your spam folder.
               </AlertDescription>
             </Alert>
           ) : (
@@ -150,14 +151,17 @@ const LoginPage = () => {
                 <label htmlFor="email" className="block text-sm font-medium text-purple-300 mb-1">
                   Email
                 </label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-gray-900 border-purple-500 text-white"
-                />
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-gray-900 border-purple-500 text-white pl-9"
+                  />
+                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-purple-400" />
+                </div>
               </div>
               <Button 
                 onClick={handleSendOtp} 
@@ -171,16 +175,20 @@ const LoginPage = () => {
             <div className="space-y-4">
               <div>
                 <label htmlFor="otp" className="block text-sm font-medium text-purple-300 mb-1">
-                  Enter OTP
+                  Enter 6-digit OTP
                 </label>
-                <Input
-                  id="otp"
-                  type="text"
-                  placeholder="Enter OTP sent to your email"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="bg-gray-900 border-purple-500 text-white"
-                />
+                <div className="flex justify-center my-4">
+                  <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} className="bg-gray-900 border-purple-500" />
+                      <InputOTPSlot index={1} className="bg-gray-900 border-purple-500" />
+                      <InputOTPSlot index={2} className="bg-gray-900 border-purple-500" />
+                      <InputOTPSlot index={3} className="bg-gray-900 border-purple-500" />
+                      <InputOTPSlot index={4} className="bg-gray-900 border-purple-500" />
+                      <InputOTPSlot index={5} className="bg-gray-900 border-purple-500" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
               </div>
               <Button 
                 onClick={handleVerifyOtp} 

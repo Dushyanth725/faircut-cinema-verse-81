@@ -5,8 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
-import { Film, Clock, ArrowLeft } from "lucide-react";
+import { Film, Clock, ArrowLeft, Calendar } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { format } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -21,21 +25,22 @@ const AdminPage = () => {
   const [showtime, setShowtime] = useState({
     movieId: '',
     screen: '1',
-    time: '',
-    date: ''
+    date: null,
+    time: ''
   });
   
-  const [movies, setMovies] = useState([
-    { id: '1', title: 'Interstellar', posterUrl: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg', description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.' },
-    { id: '2', title: 'Dune', posterUrl: 'https://m.media-amazon.com/images/M/MV5BMDQ0NjgyN2YtNWViNS00YjA3LTkxNDktYzFkZTExZGMxZDkxXkEyXkFqcGdeQXVyODE5NzE3OTE@._V1_.jpg', description: 'Feature adaptation of Frank Herbert\'s science fiction novel about the son of a noble family entrusted with the protection of the most valuable asset in the galaxy.' },
-    { id: '3', title: 'The Batman', posterUrl: 'https://m.media-amazon.com/images/M/MV5BMDdmMTBiNTYtMDIzNi00NGVlLWIzMDYtZTk3MTQ3NGQxZGEwXkEyXkFqcGdeQXVyMzMwOTU5MDk@._V1_.jpg', description: 'When a sadistic serial killer begins murdering key political figures in Gotham, Batman is forced to investigate the city\'s hidden corruption.' },
-  ]);
+  // Initialize with empty array, no default movies
+  const [movies, setMovies] = useState([]);
   
-  const [showtimes, setShowtimes] = useState([
-    { id: '1', movieId: '1', screen: 'Screen 1', time: '10:00 AM', date: '2025-05-09' },
-    { id: '2', movieId: '1', screen: 'Screen 1', time: '01:30 PM', date: '2025-05-09' },
-    { id: '3', movieId: '2', screen: 'Screen 2', time: '04:45 PM', date: '2025-05-09' },
-  ]);
+  const [showtimes, setShowtimes] = useState([]);
+  
+  // Time options for the dropdown
+  const timeOptions = [
+    '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', 
+    '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', 
+    '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', 
+    '09:00 PM', '10:00 PM', '11:00 PM'
+  ];
 
   const handleAddMovie = () => {
     if (!newMovie.title || !newMovie.posterUrl) {
@@ -68,23 +73,25 @@ const AdminPage = () => {
     if (!showtime.movieId || !showtime.time || !showtime.date) {
       toast({
         title: "Error",
-        description: "Please select a movie and enter time and date",
+        description: "Please select a movie, date, and time",
         variant: "destructive"
       });
       return;
     }
     
     const newId = (showtimes.length + 1).toString();
+    const formattedDate = format(showtime.date, "yyyy-MM-dd");
+    
     const showtimeToAdd = {
       id: newId,
       movieId: showtime.movieId,
       screen: `Screen ${showtime.screen}`,
       time: showtime.time,
-      date: showtime.date
+      date: formattedDate
     };
     
     setShowtimes([...showtimes, showtimeToAdd]);
-    setShowtime({ movieId: '', screen: '1', time: '', date: '' });
+    setShowtime({ movieId: '', screen: '1', time: '', date: null });
     
     toast({
       title: "Showtime Added",
@@ -210,7 +217,7 @@ const AdminPage = () => {
                     ))}
                     {movies.length === 0 && (
                       <div className="text-center text-purple-400 py-4">
-                        No movies added yet
+                        No movies added yet. Please add some movies!
                       </div>
                     )}
                   </div>
@@ -256,23 +263,46 @@ const AdminPage = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-purple-300 mb-1 block">Time</label>
-                    <Input 
-                      value={showtime.time}
-                      onChange={(e) => setShowtime({...showtime, time: e.target.value})}
-                      placeholder="e.g. 10:00 AM"
-                      className="bg-gray-900 border-purple-500 text-white"
-                    />
+                    <label className="text-sm text-purple-300 mb-1 block">Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal bg-gray-900 border-purple-500",
+                            !showtime.date && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {showtime.date ? format(showtime.date, "PPP") : <span>Select a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-gray-800">
+                        <CalendarComponent
+                          mode="single"
+                          selected={showtime.date}
+                          onSelect={(date) => setShowtime({...showtime, date})}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   
                   <div>
-                    <label className="text-sm text-purple-300 mb-1 block">Date</label>
-                    <Input 
-                      value={showtime.date}
-                      onChange={(e) => setShowtime({...showtime, date: e.target.value})}
-                      placeholder="YYYY-MM-DD"
-                      className="bg-gray-900 border-purple-500 text-white"
-                    />
+                    <label className="text-sm text-purple-300 mb-1 block">Time</label>
+                    <select
+                      value={showtime.time}
+                      onChange={(e) => setShowtime({...showtime, time: e.target.value})}
+                      className="w-full bg-gray-900 border border-purple-500 text-white rounded-md p-2"
+                    >
+                      <option value="">Select a time</option>
+                      {timeOptions.map(time => (
+                        <option key={time} value={time}>
+                          {time}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   
                   <Button 

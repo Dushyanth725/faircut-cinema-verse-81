@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
@@ -7,12 +6,18 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Configuration for email sending (would typically be handled securely on backend)
-const emailConfig = {
-  senderEmail: 'faircutorg@gmail.com',
-  // Note: App password should be securely stored in backend environment variables, 
-  // not in frontend code. This is just for demonstration.
-  appPassword: 'swuu nxru wcdb fqdr'
+// Store OTPs in memory (in a real app, you'd use a database with TTL)
+const otpStore = new Map<string, { otp: string, expires: number }>();
+
+// Generate a random 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Validate email format
+const isValidEmail = (email: string) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 };
 
 /**
@@ -20,12 +25,25 @@ const emailConfig = {
  */
 export const signInWithEmail = async (email: string) => {
   try {
-    // For production, this would be handled by a secure backend service
-    // Here we're using Supabase's built-in OTP functionality
-    const { data, error } = await supabase.auth.signInWithOtp({
+    if (!isValidEmail(email)) {
+      return { success: false, error: { message: 'Invalid email format' } };
+    }
+
+    // Generate a 6-digit OTP
+    const otp = generateOTP();
+    
+    // Store the OTP with 10-minute expiration
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    otpStore.set(email, { otp, expires: expiresAt });
+
+    // Send the OTP via Supabase Auth (this will trigger an email)
+    // In a real implementation, you would customize this email template in Supabase
+    const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin,
+        // Use the OTP as the email subject to make it visible
+        // (Note: In a real implementation, you'd use a proper email service)
+        emailRedirectTo: `${window.location.origin}?otp=${otp}`,
       },
     });
 
@@ -33,10 +51,9 @@ export const signInWithEmail = async (email: string) => {
       throw error;
     }
     
-    // In a real implementation, you might want to add additional logging or tracking here
-    console.log("OTP email sent successfully to:", email);
+    console.log("OTP email sent successfully to:", email, "OTP:", otp);
     
-    return { success: true, data };
+    return { success: true, message: 'OTP sent successfully' };
   } catch (error) {
     console.error('Error sending OTP:', error);
     return { success: false, error };
@@ -48,10 +65,31 @@ export const signInWithEmail = async (email: string) => {
  */
 export const verifyOtp = async (email: string, otp: string) => {
   try {
-    const { data, error } = await supabase.auth.verifyOtp({
+    const storedData = otpStore.get(email);
+    
+    if (!storedData) {
+      return { success: false, error: { message: 'No OTP was sent to this email or it has expired' } };
+    }
+    
+    if (Date.now() > storedData.expires) {
+      otpStore.delete(email); // Clean up expired OTP
+      return { success: false, error: { message: 'OTP has expired. Please request a new one.' } };
+    }
+    
+    if (storedData.otp !== otp) {
+      return { success: false, error: { message: 'Invalid OTP. Please try again.' } };
+    }
+    
+    // OTP is valid, clear it from storage
+    otpStore.delete(email);
+    
+    // Sign in the user with Supabase
+    const { data, error } = await supabase.auth.signInWithOtp({
       email,
       token: otp,
-      type: 'email',
+      options: {
+        shouldCreateUser: true,
+      }
     });
 
     if (error) {

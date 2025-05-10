@@ -45,43 +45,28 @@ const TheatreDetails = () => {
     }
   ];
 
-  // Sample movies - in a real app, these would come from Supabase
-  const sampleMovies = [
-    {
-      id: '1',
-      title: 'Interstellar',
-      poster: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg',
-      description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.'
-    },
-    {
-      id: '2',
-      title: 'Dune',
-      poster: 'https://m.media-amazon.com/images/M/MV5BMDQ0NjgyN2YtNWViNS00YjA3LTkxNDktYzFkZTExZGMxZDkxXkEyXkFqcGdeQXVyODE5NzE3OTE@._V1_.jpg',
-      description: 'Feature adaptation of Frank Herbert\'s science fiction novel about the son of a noble family entrusted with the protection of the most valuable asset in the galaxy.'
-    },
-    {
-      id: '3',
-      title: 'The Batman',
-      poster: 'https://m.media-amazon.com/images/M/MV5BMDdmMTBiNTYtMDIzNi00NGVlLWIzMDYtZTk3MTQ3NGQxZGEwXkEyXkFqcGdeQXVyMzMwOTU5MDk@._V1_.jpg',
-      description: 'When the Riddler, a sadistic serial killer, begins murdering key political figures in Gotham, Batman is forced to investigate the city\'s hidden corruption.'
-    }
-  ];
-
   useEffect(() => {
     const fetchMovies = async () => {
       setLoading(true);
       try {
-        // In a real app, we would fetch from Supabase
+        // Ideally we would fetch from Supabase
         // const { data, error } = await supabase.from('movies').select('*');
         // if (error) throw error;
         // setMovies(data);
-
-        // For now, use sample data
-        setMovies(sampleMovies);
         
         // Find the current theatre
         const selectedTheatre = theatres.find(t => t.id === id);
         setTheatre(selectedTheatre);
+        
+        // Get movies from local storage (where we store admin-added movies)
+        // In a real app, this would be from Supabase
+        const storedMovies = localStorage.getItem('faircut-movies');
+        if (storedMovies) {
+          setMovies(JSON.parse(storedMovies));
+        } else {
+          // Initialize with empty array
+          setMovies([]);
+        }
       } catch (error) {
         console.error('Error fetching movies:', error);
       } finally {
@@ -90,7 +75,31 @@ const TheatreDetails = () => {
     };
 
     fetchMovies();
+    
+    // Set up listener for movie additions
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [id]);
+  
+  // Listen for changes to localStorage (for testing purposes)
+  const handleStorageChange = (e) => {
+    if (e.key === 'faircut-movies') {
+      const storedMovies = localStorage.getItem('faircut-movies');
+      if (storedMovies) {
+        setMovies(JSON.parse(storedMovies));
+      }
+    }
+  };
+
+  // Store movies in localStorage when they change in AdminPage
+  useEffect(() => {
+    if (window.location.pathname.includes('admin')) {
+      return; // Don't save from admin page
+    }
+    if (movies && movies.length > 0) {
+      localStorage.setItem('faircut-movies', JSON.stringify(movies));
+    }
+  }, [movies]);
 
   if (loading) {
     return (
@@ -154,40 +163,53 @@ const TheatreDetails = () => {
 
         <h2 className="text-xl font-semibold text-white mb-4">Now Showing</h2>
         
-        <div className="grid gap-4">
-          {movies.map(movie => (
-            <Card 
-              key={movie.id}
-              className="bg-black/70 border-purple-500 overflow-hidden cursor-pointer transition-transform hover:scale-[1.01]"
-              onClick={() => navigate(`/movie/${theatre.id}/${movie.id}`)}
-            >
-              <div className="flex">
-                <div className="w-1/3">
-                  <img 
-                    src={movie.poster} 
-                    alt={movie.title} 
-                    className="h-full object-cover"
-                  />
+        {movies.length > 0 ? (
+          <div className="grid gap-4">
+            {movies.map(movie => (
+              <Card 
+                key={movie.id}
+                className="bg-black/70 border-purple-500 overflow-hidden cursor-pointer transition-transform hover:scale-[1.01]"
+                onClick={() => navigate(`/movie/${theatre.id}/${movie.id}`)}
+              >
+                <div className="flex">
+                  <div className="w-1/3">
+                    <img 
+                      src={movie.posterUrl} 
+                      alt={movie.title} 
+                      className="h-full object-cover"
+                    />
+                  </div>
+                  <CardContent className="w-2/3 p-4">
+                    <h3 className="text-lg font-bold text-white">{movie.title}</h3>
+                    <p className="text-purple-300 text-sm line-clamp-2 mt-1">
+                      {movie.description}
+                    </p>
+                    <Button 
+                      className="mt-3 bg-purple-600 hover:bg-purple-700 text-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/movie/${theatre.id}/${movie.id}`);
+                      }}
+                    >
+                      Book Tickets
+                    </Button>
+                  </CardContent>
                 </div>
-                <CardContent className="w-2/3 p-4">
-                  <h3 className="text-lg font-bold text-white">{movie.title}</h3>
-                  <p className="text-purple-300 text-sm line-clamp-2 mt-1">
-                    {movie.description}
-                  </p>
-                  <Button 
-                    className="mt-3 bg-purple-600 hover:bg-purple-700 text-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/movie/${theatre.id}/${movie.id}`);
-                    }}
-                  >
-                    Book Tickets
-                  </Button>
-                </CardContent>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-purple-300">
+            <p className="mb-4">No movies available at the moment.</p>
+            <p className="text-sm">Movies will appear when added by the admin.</p>
+            <Button 
+              className="mt-4 bg-purple-600 hover:bg-purple-700"
+              onClick={() => navigate('/admin')}
+            >
+              Go to Admin Panel
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
